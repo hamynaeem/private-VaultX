@@ -85,7 +85,10 @@ import { UploadTask } from '../../models/vault.models';
         <div class="queue-card glass-card">
           <div class="queue-header">
             <h3><mat-icon>queue</mat-icon> Upload Queue ({{ uploadQueue().length }})</h3>
-            <button mat-stroked-button (click)="clearCompleted()">Clear Completed</button>
+              <div style="display:flex;gap:8px;align-items:center">
+                <button mat-stroked-button (click)="clearCompleted()">Clear Completed</button>
+                <button mat-stroked-button color="primary" (click)="syncLocal()">Sync Local</button>
+              </div>
           </div>
           <div class="queue-list">
             @for (task of uploadQueue(); track task.file.name) {
@@ -293,19 +296,28 @@ export class UploadComponent {
           (progress) => this.updateTask(task.file.name, { progress }),
           async (url, path) => {
             const fileType = this.storageService.getFileType(task.file);
-            await this.firestoreService.addFile({
-              userId: uid,
-              folderId: this.selectedFolder || null,
-              fileName: task.file.name,
-              fileType,
-              mimeType: task.file.type,
-              fileSize: task.file.size,
-              downloadUrl: url,
-              storagePath: path,
-              createdAt: null as any,
-            });
-            this.updateTask(task.file.name, { status: 'success', progress: 100 });
-            resolve();
+            try {
+              const docRef = await this.firestoreService.addFile({
+                userId: uid,
+                folderId: this.selectedFolder || null,
+                fileName: task.file.name,
+                fileType,
+                mimeType: task.file.type,
+                fileSize: task.file.size,
+                downloadUrl: url,
+                storagePath: path,
+                createdAt: null as any,
+              });
+              console.log('File metadata saved to Firestore', docRef);
+              this.updateTask(task.file.name, { status: 'success', progress: 100 });
+            } catch (err: any) {
+              console.error('Failed to save file metadata', err);
+              const msg = err?.message ?? String(err);
+              this.updateTask(task.file.name, { status: 'error', error: msg });
+              this.snackBar.open('Failed to save file metadata: ' + msg, 'Dismiss', { duration: 5000 });
+            } finally {
+              resolve();
+            }
           },
           (err) => {
             this.updateTask(task.file.name, { status: 'error', error: err.message });
@@ -317,6 +329,22 @@ export class UploadComponent {
 
     this.isUploading.set(false);
     this.snackBar.open('Upload complete!', 'OK', { duration: 3000 });
+  }
+
+  async syncLocal() {
+    const uid = this.auth.currentUser()?.uid;
+    if (!uid) {
+      this.snackBar.open('Not signed in', 'Dismiss', { duration: 3000 });
+      return;
+    }
+    this.snackBar.open('Syncing local files...', '', { duration: 2000 });
+    try {
+      const res = await this.firestoreService.syncLocalFiles(uid);
+      this.snackBar.open(`Synced ${res.created} file(s)`, 'OK', { duration: 4000 });
+    } catch (err: any) {
+      console.error('Sync failed', err);
+      this.snackBar.open('Sync failed: ' + (err?.message ?? String(err)), 'Dismiss', { duration: 5000 });
+    }
   }
 
   private updateTask(name: string, partial: Partial<UploadTask>) {
