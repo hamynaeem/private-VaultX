@@ -83,6 +83,9 @@ import { VaultFile } from '../../models/vault.models';
               <span class="badge" [class]="'badge-' + doc.fileType">{{ doc.fileType }}</span>
               <span class="doc-size">{{ storage.formatBytes(doc.fileSize) }}</span>
               <div class="row-actions">
+                <button class="icon-action" (click)="viewOnline(doc)" matTooltip="View">
+                  <mat-icon>visibility</mat-icon>
+                </button>
                 <button class="icon-action" (click)="download(doc)" matTooltip="Download">
                   <mat-icon>download</mat-icon>
                 </button>
@@ -106,7 +109,10 @@ import { VaultFile } from '../../models/vault.models';
                 <span class="doc-size">{{ storage.formatBytes(doc.fileSize) }}</span>
               </div>
               <div class="card-actions">
-                <button class="icon-action" (click)="download(doc)">
+                <button class="icon-action" (click)="viewOnline(doc)" matTooltip="View">
+                  <mat-icon>visibility</mat-icon>
+                </button>
+                <button class="icon-action" (click)="download(doc)" matTooltip="Download">
                   <mat-icon>download</mat-icon>
                 </button>
                 <button class="icon-action danger" (click)="deleteDoc(doc)">
@@ -212,7 +218,9 @@ export class DocumentsComponent {
         const a = document.createElement('a');
         a.href = url;
         a.download = file.fileName;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       }).catch(() => this.snackBar.open('Download failed', 'Dismiss', { duration: 3000 }));
       return;
@@ -222,7 +230,23 @@ export class DocumentsComponent {
     a.href = file.downloadUrl;
     a.download = file.fileName;
     a.target = '_blank';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
+  }
+
+  viewOnline(file: VaultFile) {
+    if (file.downloadUrl?.startsWith('local:')) {
+      const fileId = file.downloadUrl.replace('local:', '');
+      this.localStorage.downloadFileAsBlob(fileId).then((blob) => {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
+      }).catch(() => this.snackBar.open('Failed to open file', 'Dismiss', { duration: 3000 }));
+      return;
+    }
+
+    window.open(file.downloadUrl, '_blank');
   }
 
   async deleteDoc(file: VaultFile) {

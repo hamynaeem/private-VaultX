@@ -328,6 +328,7 @@ export class UploadComponent {
     }
 
     this.isUploading.set(false);
+    this.clearCompleted();
     this.snackBar.open('Upload complete!', 'OK', { duration: 3000 });
   }
 

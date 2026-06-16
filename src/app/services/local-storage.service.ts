@@ -161,18 +161,7 @@ export class LocalStorageService {
   }
 
   async uploadFile(folderId: string, file: File, onProgress?: (n: number) => void, userId?: string) {
-    const allowed = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/zip',
-    ];
     const maxSize = 50 * 1024 * 1024;
-    if (!allowed.includes(file.type)) throw new Error('File type not allowed');
     if (file.size > maxSize) throw new Error('File exceeds maximum size');
 
     const arrayBuffer = await this.readFileArrayBuffer(file, onProgress);

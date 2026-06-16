@@ -14,6 +14,7 @@ import {
   onSnapshot,
   limit,
   Unsubscribe,
+  Timestamp,
 } from '@angular/fire/firestore';
 import { db } from './file-db';
 import { VaultFile, VaultFolder, StorageStats } from '../models/vault.models';
@@ -59,7 +60,7 @@ export class FirestoreService {
   async addFile(file: Omit<VaultFile, 'id'>) {
     return addDoc(collection(this.firestore, 'files'), {
       ...file,
-      createdAt: serverTimestamp(),
+      createdAt: Timestamp.now(),
     });
   }
 
@@ -70,7 +71,7 @@ export class FirestoreService {
   async addFolder(folder: Omit<VaultFolder, 'id'>) {
     return addDoc(collection(this.firestore, 'folders'), {
       ...folder,
-      createdAt: serverTimestamp(),
+      createdAt: Timestamp.now(),
     });
   }
 
@@ -134,7 +135,7 @@ export class FirestoreService {
         fileSize: e.fileSize,
         downloadUrl: storagePath,
         storagePath,
-        createdAt: serverTimestamp(),
+        createdAt: Timestamp.now(),
       });
       created++;
     }

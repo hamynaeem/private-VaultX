@@ -35,25 +35,7 @@ export class StorageService {
     onComplete?: (url: string, path: string) => void,
     onError?: (err: Error) => void,
   ) {
-    // Basic validation
-    const allowed = [
-      'image/jpeg',
-      'image/jpg',
-      'image/png',
-      'image/webp',
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-      'application/zip',
-      'application/msword',
-      'application/vnd.ms-excel',
-    ];
-
     const maxSize = 50 * 1024 * 1024; // 50MB
-    if (!allowed.includes(file.type)) {
-      onError?.(new Error('File type not allowed'));
-      return;
-    }
     if (file.size > maxSize) {
       onError?.(new Error('File exceeds maximum size'));
       return;

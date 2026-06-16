@@ -273,7 +273,9 @@ export class GalleryComponent {
         const a = document.createElement('a');
         a.href = url;
         a.download = photo.fileName;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       }).catch(() => this.snackBar.open('Download failed', 'Dismiss', { duration: 3000 }));
       return;
@@ -283,7 +285,9 @@ export class GalleryComponent {
     a.href = photo.downloadUrl;
     a.download = photo.fileName;
     a.target = '_blank';
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
   }
 
   async deletePhoto(photo: VaultFile, e: Event) {
